@@ -33,11 +33,11 @@ class MyWindow(QWidget):
         self.myButton2.clicked.connect(self.showImage)
         self.myButton2.move(80, 0)
 
-        self.myButton2 = QPushButton(self)
-        self.myButton2.setObjectName("runButton")
-        self.myButton2.setText("run")
-        self.myButton2.clicked.connect(self.runTracker)
-        self.myButton2.move(160, 0)
+        self.myButton3 = QPushButton(self)
+        self.myButton3.setObjectName("runButton")
+        self.myButton3.setText("run")
+        self.myButton3.clicked.connect(self.runTracker)
+        self.myButton3.move(160, 0)
 
 
     def video2Image(self):
@@ -62,12 +62,13 @@ class MyWindow(QWidget):
         hbox = QHBoxLayout(self)
         pixmap = QPixmap("./ans/1.jpg")
 
-        self.lb = myLabel(self)
+        self.lb = MyLabel(self)
         self.lb.setGeometry(0, 100, 500, 500)
         self.lb.setPixmap(pixmap)
         hbox.addWidget(self.lb)
         self.setLayout(hbox)
         self.lb.setCursor(Qt.CrossCursor)
+
     #set the window center
     def setCenter(self):
         qr = self.frameGeometry()
@@ -75,12 +76,12 @@ class MyWindow(QWidget):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
-    #run kcf algorithm ##need to be modified or use os.popen(cmd)
+    #run kcf algorithm ##need to be modified or user os.popen(cmd)
     def runTracker(self):
         # os.system("dir")
+        pass
 
-
-class myLabel(QLabel):
+class MyLabel(QLabel):
     x0 = 0
     y0 = 0
     x1 = 0
@@ -114,6 +115,6 @@ class myLabel(QLabel):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    myshow = MyWindow()
-    myshow.show()
+    myShow = MyWindow()
+    myShow.show()
     sys.exit(app.exec_())
