@@ -50,6 +50,7 @@ class MyWindow(QWidget):
         super().__init__()
         self.initUI()
         self.c = 0
+        self.setWindowIcon(QIcon('favicon.ico'))
 
     def initUI(self):
         if os.path.exists("./ans"):
@@ -95,7 +96,7 @@ class MyWindow(QWidget):
                 while vc.read()[0]:
                     cv2.imwrite('./ans/' + str(self.c) + '.jpg', vc.read()[1])
                     self.c = self.c + 1
-                    cv2.waitKey(1)
+                    cv2.waitKey(50)
                 vc.release()
 
     def showImg(self):
