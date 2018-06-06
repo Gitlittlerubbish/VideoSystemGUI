@@ -1,85 +1,18 @@
-#!usr/bin/python3
+#!/usr/bin/python3
 #coding: utf-8
 
 '''
-This is a GUI for our Fast Video Tracking System Based on Kernel Correlation Filter
+This is a GUI for our fast video tracking system based on KCF
 '''
 
-__authour__ = "Yelin Hanxiaohao Chenxiao"
+__author__ = "Yelin & Hanxiaohao & Chenxiao"
 
-import sys
-import os
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
-from PyQt5.QtCore import *
+from PyQt5.QtCore import*
 import cv2
-
-class MyWindow(QWidget):
-    def __init__(self):
-        super(MyWindow,self).__init__()
-
-        self.setGeometry(100, 100, 1600, 900)
-        self.setCenter()
-
-        #two buttons for generating and showing image
-        self.myButton = QPushButton(self)
-        self.myButton.setObjectName("myButton")
-        self.myButton.setText("Test")
-        self.myButton.clicked.connect(self.video2Image)
-
-        self.myButton2 = QPushButton(self)
-        self.myButton2.setObjectName("showButton")
-        self.myButton2.setText("show")
-        self.myButton2.clicked.connect(self.showImage)
-        self.myButton2.move(80, 0)
-
-        self.myButton3 = QPushButton(self)
-        self.myButton3.setObjectName("runButton")
-        self.myButton3.setText("run")
-        self.myButton3.clicked.connect(self.runTracker)
-        self.myButton3.move(160, 0)
-
-
-    def video2Image(self):
-        fname = QFileDialog.getOpenFileName(self, 'Open file', '/home')
-        if fname[0]:
-            f = open(fname[0], 'r')
-            with f:
-                vc = cv2.VideoCapture(fname[0])
-                c = 1
-                if vc.isOpened():
-                    rval, frame = vc.read()
-                else:
-                    rval = False
-                while rval:
-                    rval, frame = vc.read()
-                    cv2.imwrite('./ans/' + str(c) + '.jpg', frame)
-                    c = c + 1
-                    cv2.waitKey(1)
-                vc.release()
-
-    def showImage(self):
-        hbox = QHBoxLayout(self)
-        pixmap = QPixmap("./ans/1.jpg")
-
-        self.lb = MyLabel(self)
-        self.lb.setGeometry(0, 100, 500, 500)
-        self.lb.setPixmap(pixmap)
-        hbox.addWidget(self.lb)
-        self.setLayout(hbox)
-        self.lb.setCursor(Qt.CrossCursor)
-
-    #set the window center
-    def setCenter(self):
-        qr = self.frameGeometry()
-        cp = QDesktopWidget().availableGeometry().center()
-        qr.moveCenter(cp)
-        self.move(qr.topLeft())
-
-    #run kcf algorithm ##need to be modified or user os.popen(cmd)
-    def runTracker(self):
-        # os.system("dir")
-        pass
+import sys
+import os
 
 class MyLabel(QLabel):
     x0 = 0
@@ -88,16 +21,18 @@ class MyLabel(QLabel):
     y1 = 0
     flag = False
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self,event):
         self.flag = True
         self.x0 = event.x()
         self.y0 = event.y()
 
-    def mouseReleaseEvent(self, event):
+    def mouseReleaseEvent(self,event):
         self.flag = False
-        print(self.x0, self.y0, abs(self.x1 - self.x0), abs(self.y1 - self.y0))
+        file_handle=open('ground_truth.txt', mode='w')
+        file_handle.write("%d,%d,%d,%d"%(self.x0, self.y0, abs(self.x1-self.x0), abs(self.y1-self.y0)))
+        print(self.x0, self.y0, abs(self.x1-self.x0), abs(self.y1-self.y0))
 
-    def mouseMoveEvent(self, event):
+    def mouseMoveEvent(self,event):
         if self.flag:
             self.x1 = event.x()
             self.y1 = event.y()
@@ -105,13 +40,80 @@ class MyLabel(QLabel):
 
     def paintEvent(self, event):
         super().paintEvent(event)
-        rect = QRect(self.x0, self.y0, abs(self.x1 - self.x0), abs(self.y1 - self.y0))
+        rect =QRect(self.x0, self.y0, abs(self.x1-self.x0), abs(self.y1-self.y0))
         painter = QPainter(self)
         painter.setPen(QPen(Qt.red, 4, Qt.SolidLine))
         painter.drawRect(rect)
 
-        pqscreen = QGuiApplication.primaryScreen()
-        pixmap2 = pqscreen.grabWindow(self.winId(), self.x0, self.y0, abs(self.x1 - self.x0), abs(self.y1 - self.y0))
+class MyWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+        self.c = 0
+
+    def initUI(self):
+        if os.path.exists("./ans"):
+            os.system("rmdir /s/q ans")
+        os.system("mkdir ans")
+
+        self.picture1 = MyLabel(self)
+
+        btn1 = QPushButton('open', self)
+        btn1.clicked.connect(self.video2Img)
+
+        btn2 = QPushButton('show', self)
+        btn2.clicked.connect(self.showImg)
+
+        btn3 = QPushButton('run', self)
+        btn3.clicked.connect(self.runTracker)
+
+        grid = QGridLayout()
+        grid.setSpacing(10)
+
+        grid.addWidget(btn1, 1, 0)
+        grid.addWidget(btn2, 2, 0)
+        grid.addWidget(btn3, 3, 0)
+        grid.addWidget(self.picture1, 1, 1, 3, 1, Qt.AlignTop)
+
+        self.setLayout(grid)
+        self.setGeometry(300, 300, 1600, 900)
+        self.setCenter()
+        self.setWindowTitle('KCF Tracker')
+        self.show()
+
+    def video2Img(self):
+        fname = QFileDialog.getOpenFileName(self, 'Open file', './')
+        if fname[0]:
+            f = open(fname[0], 'r')
+            with f:
+                vc = cv2.VideoCapture(fname[0])
+                self.c = 1
+                if vc.isOpened():
+                    rval, frame = vc.read()
+                else:
+                    rval = False
+                while vc.read()[0]:
+                    cv2.imwrite('./ans/' + str(self.c) + '.jpg', vc.read()[1])
+                    self.c = self.c + 1
+                    cv2.waitKey(1)
+                vc.release()
+
+    def showImg(self):
+        pixmap = QPixmap("./ans/1.jpg")
+        self.picture1.setPixmap(pixmap)
+        self.picture1.setCursor(Qt.CrossCursor)
+
+    #set the window center
+    def setCenter(self):
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+
+    def runTracker(self):
+        PATH = 'KCF ' + str(self.c - 1)
+        os.system(PATH)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
